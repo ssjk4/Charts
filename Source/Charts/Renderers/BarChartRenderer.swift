@@ -400,17 +400,21 @@ open class BarChartRenderer: BarLineScatterCandleBubbleRenderer
             }
         }
         
-        let isSingleColor = dataSet.colors.count == 1
-        
-        if isSingleColor
-        {
-            context.setFillColor(dataSet.color(atIndex: 0).cgColor)
+        if dataSet.fillGradientColor, let barGradientColors = dataSet.barGradientColors, barGradientColors.count > 0 {
+            
+        } else {
+            let isSingleColor = dataSet.colors.count == 1
+            if isSingleColor
+            {
+                context.setFillColor(dataSet.color(atIndex: 0).cgColor)
+            }
         }
 
         // In case the chart is stacked, we need to accomodate individual bars within accessibilityOrdereredElements
         let isStacked = dataSet.isStacked
         let stackSize = isStacked ? dataSet.stackSize : 1
 
+        var barGradient: CGGradient? = nil  //if use dataSet.fillGradientColor will use this param
         for j in stride(from: 0, to: buffer.rects.count, by: 1)
         {
             let barRect = buffer.rects[j]
@@ -425,13 +429,25 @@ open class BarChartRenderer: BarLineScatterCandleBubbleRenderer
                 break
             }
             
-            if !isSingleColor
-            {
-                // Set the color for the currently drawn value. If the index is out of bounds, reuse colors.
-                context.setFillColor(dataSet.color(atIndex: j).cgColor)
+            if dataSet.fillGradientColor, let barGradientColors = dataSet.barGradientColors, barGradientColors.count > 0 {
+                context.resetClip()
+                context.clip(to: barRect)
+                if barGradient == nil {
+                    let gradientColors = barGradientColors.map { (color) -> CGColor in
+                        color.cgColor
+                    }
+                    barGradient = CGGradient(colorsSpace: nil, colors: gradientColors as CFArray, locations: nil)!
+                }
+                context.drawLinearGradient(barGradient!, start: CGPoint(x: barRect.midX, y: barRect.minY), end: CGPoint(x: barRect.midX, y: barRect.maxY), options: CGGradientDrawingOptions())
+            } else {
+                let isSingleColor = dataSet.colors.count == 1
+                if !isSingleColor
+                {
+                    // Set the color for the currently drawn value. If the index is out of bounds, reuse colors.
+                    context.setFillColor(dataSet.color(atIndex: j).cgColor)
+                }
+                context.fill(barRect)
             }
-            
-            context.fill(barRect)
             
             if drawBorder
             {

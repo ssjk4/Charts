@@ -39,4 +39,9 @@ public protocol IBarChartDataSet: IBarLineScatterCandleBubbleChartDataSet
     
     /// array of labels used to describe the different values of the stacked bars
     var stackLabels: [String] { get set }
+    
+    /// fill bar with gradeint color or not
+    var fillGradientColor: Bool { get set }
+    
+    var barGradientColors: [NSUIColor]? { get set }
 }
